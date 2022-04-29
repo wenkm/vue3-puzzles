@@ -6,7 +6,10 @@
                 <span>{{number}}阶</span>
                 <button @click="number++" :disabled="number >= 8">+</button>
             </div>
-            <button @click="shuffleHandle">打乱</button>
+            <button @click="shuffleHandle" :disabled="!isStart">打乱</button>
+            <button @click="startHandle" :disabled="isStart">开始</button>
+            <button @click="isStart = false" :disabled="!isStart">停止</button>
+            <timer :start="isStart"></timer>
         </div>
         <transition-group name="puzzle" tag="div" class="container" :style="{width: `${number * 100}px`, height: `${number * 100}px`}">
             <div class="item" :class="{empty: item === ''}" v-for="item, index in puzzles" :key="item" @mousedown="clickHandle(index, item)" :style="`background-position: ${-100 * (item - 1)}px ${-100 * ~~((item - 1) / number)}px`">
@@ -16,11 +19,12 @@
     </div>
 </template>
 <script setup>
+import timer from '@/components/timer.vue';
 import {ref, watch} from 'vue';
 const puzzles = ref([]),
     number = ref(3),
-    size = ref(0);
-
+    size = ref(0),
+    isStart = ref(false);
 watch(number, v => {
     if ('' === v) {
         return;
@@ -30,12 +34,11 @@ watch(number, v => {
     for (let i = 1; i < v * v; i++) {
         puzzles.value.push(i);
     }
-    shuffle(puzzles.value);
     puzzles.value.push('');
+    isStart.value = false;
 }, {
     immediate: true
 });
-
 function shuffle(arr) {
     return arr.sort(() => Math.random() - 0.5);
 }
@@ -44,6 +47,9 @@ function shuffleHandle() {
     puzzles.value.push('');
 }
 function clickHandle(index, item) {
+    if (!isStart.value) {
+        return;
+    }
     const leftIndex = index - 1,
         rightIndex = index + 1,
         topIndex = index - number.value,
@@ -62,7 +68,8 @@ function clickHandle(index, item) {
         puzzles.value[index] = '';
     }
     if (isSuccess()) {
-        alert('恭喜你，成功了！');
+        timer.isStart = false;
+        alert('牛逼！');
     }
 }
 function isSuccess() {
@@ -73,6 +80,10 @@ function isSuccess() {
         }
     }
     return true;
+}
+function startHandle() {
+    isStart.value = true;
+    shuffleHandle();
 }
 </script>
 <style lang="less">
@@ -87,6 +98,7 @@ function isSuccess() {
     display: flex;
     gap: 10px;
     margin-bottom: 10px;
+    align-items: center;
 }
 button{
     background: linear-gradient(30deg, #f64af6, #c2da62);
@@ -117,7 +129,6 @@ button{
     position: relative;
     user-select: none;
     &:hover{
-        transition: 0.2s;
         opacity: 0.5;
     }
     span{

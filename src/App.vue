@@ -87,13 +87,6 @@ function startHandle() {
     isStart.value = true;
     shuffleHandle();
 }
-function chunkArr(arr, size) {
-    const newArr = [];
-    for (let i = 0; i < arr.length; i += size) {
-        newArr.push(arr.slice(i, i + size));
-    }
-    return newArr;
-}
 function photoPickerHandle() {
     const input = document.createElement('input');
     input.type = 'file';

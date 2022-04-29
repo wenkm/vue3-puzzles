@@ -1,5 +1,5 @@
 <template>
-    <div id="box" :style="`--size: ${size}px; --scale: ${scale}`">
+    <div id="box" :style="`--size: ${size}px; --scale: ${scale}; --photo: url(${photo})`">
         <div class="action">
             <div class="set">
                 <button @click="number--" :disabled="number <= 3">-</button>
@@ -9,9 +9,8 @@
             <button @click="shuffleHandle" :disabled="!isStart">打乱</button>
             <button @click="startHandle" :disabled="isStart">开始</button>
             <button @click="isStart = false" :disabled="!isStart">停止</button>
-            <!-- <button @click="autoHandle" :disabled="!isStart">自动</button> -->
-            
         </div>
+        <button @click="photoPickerHandle">选取图像</button>
         <timer :start="isStart"></timer>
         <transition-group name="puzzle" tag="div" class="container" :style="{width: `${size}px`, height: `${size}px`}">
             <div class="item" :class="{empty: item === 0}" v-for="(item, index) in puzzles" :key="item" @mousedown="clickHandle(index, item)" @touchstart.prevent="clickHandle(index, item)" :style="`background-position: ${-100 * (item - 1)}px ${-100 * ~~((item - 1) / number)}px`">
@@ -22,11 +21,12 @@
 </template>
 <script setup>
 import timer from '@/components/timer.vue';
-import {ref, watch, nextTick} from 'vue';
+import {ref, watch} from 'vue';
 const puzzles = ref([]),
     number = ref(3),
     size = ref(0),
     scale = ref(1),
+    photo = ref(''),
     isStart = ref(false);
 watch(
     number,
@@ -44,11 +44,8 @@ watch(
         immediate: true,
     },
 );
-function shuffle(arr) {
-    return arr.sort(() => Math.random() - 0.5);
-}
 function shuffleHandle() {
-    puzzles.value = shuffle(puzzles.value.filter(item => item !== 0));
+    puzzles.value = puzzles.value.filter(item => item !== 0).sort(() => Math.random() - 0.5);
     puzzles.value.push(0);
 }
 function clickHandle(index, item) {
@@ -97,10 +94,27 @@ function chunkArr(arr, size) {
     }
     return newArr;
 }
-
+function photoPickerHandle() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = () => {
+        const file = input.files[0];
+        if (!file) {
+            return;
+        }
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onloadend = () => {
+            photo.value = reader.result;
+        };
+    };
+    input.click();
+}
 </script>
 <style lang="less">
-html, body{
+html,
+body {
     margin: 0;
     padding: 0;
 }
@@ -118,7 +132,6 @@ html, body{
     margin-bottom: 10px;
     align-items: center;
     flex-wrap: wrap;
-    
 }
 button {
     background: linear-gradient(30deg, #f64af6, #c2da62);
@@ -144,8 +157,8 @@ button {
     height: 100px;
     background-color: #f5f5f5;
     box-shadow: 0 0 0 1px #000;
-    background-image: url('@/assets/hui.jpg');
-    background-size: var(--size) var(--size);
+    background-image: var(--photo), url('@/assets/0a.jpg');
+    background-size: var(--size) auto;
     position: relative;
     user-select: none;
     &:hover {
